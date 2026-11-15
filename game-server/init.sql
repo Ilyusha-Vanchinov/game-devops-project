@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS players (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL,
+    wins INT DEFAULT 0,
+    losses INT DEFAULT 0
+);

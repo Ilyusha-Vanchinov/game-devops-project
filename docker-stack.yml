@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  proxy:
+    image: localhost:5000/game-proxy:latest
+    ports:
+      - "80:80"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    networks:
+      - game-net
+
+  frontend:
+    image: localhost:5000/game-frontend:latest
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    networks:
+      - game-net
+
+  game-server:
+    image: localhost:5000/game-server:latest
+    environment:
+      - DATABASE_URL=postgres://user:password@postgres:5432/gamedb
+      - REDIS_URL=redis://redis:6379
+    deploy:
+      replicas: 2 # Запускаем 2 реплики для балансировки!
+      restart_policy:
+        condition: on-failure
+    networks:
+      - game-net
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: gamedb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    deploy:
+      placement:
+        constraints: [node.role == manager] # БД держим только на мастере
+    networks:
+      - game-net
+
+  redis:
+    image: redis:7-alpine
+    networks:
+      - game-net
+
+volumes:
+  pgdata:
+
+networks:
+  game-net:
+    driver: overlay
